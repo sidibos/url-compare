@@ -1,5 +1,11 @@
 
-import requests, sys, argparse
+import re
+import requests
+import sys
+import argparse
+from bs4 import BeautifulSoup
+import lxml
+from lxml.html.clean import clean_html
 
 def main():
     url1, url2, ifile = process_args()
@@ -7,7 +13,30 @@ def main():
     if ifile != None:
         print("process file")
     else:
-        print(f"Url1: {url1}, Url2: {url2}")
+        try:
+            url1_resp = requests.get(url1)
+            link1_headersJSON = url1_resp.headers
+            url2_resp = requests.get(url2)
+            link2_headersJSON = url2_resp.headers
+
+            link1_html_text = url1_resp.text
+            link2_html_text = url2_resp.text
+
+            soup1 = BeautifulSoup(link1_html_text, 'html.parser')
+            soup2 = BeautifulSoup(link2_html_text, 'html.parser')
+
+            #cleantext = re.sub("<.*?>", "", soup1.title)
+
+            print(soup1.title)
+            print(soup2.title)
+
+            if soup1.title != soup2.title:
+                print("titles are different")
+            else:
+                print("titles are the same")
+            
+        except Exception as e:
+            sys.exit(e)
 
 
 
@@ -37,7 +66,7 @@ def process_args():
     url1 = 'link1'
     url2 = 'link2'
 
-    return url1, url2, ifile
+    return link1, link2, ifile
 
 if __name__ == "__main__":
     main()
