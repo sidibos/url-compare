@@ -14,31 +14,61 @@ def main():
         print("process file")
     else:
         try:
-            url1_resp = requests.get(url1)
-            link1_headersJSON = url1_resp.headers
-            url2_resp = requests.get(url2)
-            link2_headersJSON = url2_resp.headers
+            #url1_resp = requests.get(url1)
+            #link1_headersJSON = url1_resp.headers
+            #url2_resp = requests.get(url2)
+            #link2_headersJSON = url2_resp.headers
 
-            link1_html_text = url1_resp.text
-            link2_html_text = url2_resp.text
+            #link1_html_text = url1_resp.text
+            #link2_html_text = url2_resp.text
 
-            soup1 = BeautifulSoup(link1_html_text, 'html.parser')
-            soup2 = BeautifulSoup(link2_html_text, 'html.parser')
+            #soup1 = BeautifulSoup(link1_html_text, 'html.parser')
+            #soup2 = BeautifulSoup(link2_html_text, 'html.parser')
 
             #cleantext = re.sub("<.*?>", "", soup1.title)
-
-            print(soup1.title)
-            print(soup2.title)
-
-            if soup1.title != soup2.title:
-                print("titles are different")
-            else:
-                print("titles are the same")
+            result = compare_urls(url1, url2)
+           
             
         except Exception as e:
             sys.exit(e)
 
 
+def compare_urls(url1, url2):
+    result = list()
+    try:
+        url1_resp = requests.get(url1)
+        url2_resp = requests.get(url2)
+
+        soup1 = BeautifulSoup(url1_resp.text, 'html.parser')
+        soup2 = BeautifulSoup(url2_resp.text, 'html.parser')
+
+        desc1       = get_page_description(soup1.find_all("meta"))
+        desc2       = get_page_description(soup2.find_all("meta"))
+
+        print(f"Desc one: {desc1}")
+        print(f"desc two: {desc2}")
+
+        #print(soup2.find_all("meta"))
+        # print(soup1)
+        # print(soup2)
+
+        if soup1.title.string != soup2.title.string:
+            print("titles are different", soup1.title.string, soup2.title.string, sep=", ")
+        else:
+            print("titles are the same", soup1.title.string, soup2.title.string, sep=", ")
+
+    except Exception as e:
+        sys.exit(e)
+    
+    return result
+
+def get_page_description(meta_list):
+    desc = ""
+    for meta in meta_list:
+        if meta.get('name') == "description":
+            desc = meta.get('content')
+    
+    return desc
 
 def process_args():
     parser = argparse.ArgumentParser(description='Compare two URLs content and metadata values', 
@@ -67,6 +97,8 @@ def process_args():
     url2 = 'link2'
 
     return link1, link2, ifile
+
+
 
 if __name__ == "__main__":
     main()
