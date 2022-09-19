@@ -10,9 +10,8 @@ from lxml.html.clean import clean_html
 from tabulate import tabulate
 
 def main():
-    url1, url2, ifile = process_args()
+    url1, url2, ifile, ofile = process_args()
     result = dict()
-    #resp = requests.get("https://google.com")
     if ifile != None:
         print("process file")
         # check it is a csv file
@@ -21,25 +20,12 @@ def main():
             for row in reader:
                 url1 = row['url1']
                 url2 = row['url2']
-                print(row['url1'], row['url2'])
                 diff = compare_urls(url1, url2)
                 if len(diff) != 0:
                     index_key = url1 + ' and ' + url2
                     result[index_key] = diff
     else:
         try:
-            #url1_resp = requests.get(url1)
-            #link1_headersJSON = url1_resp.headers
-            #url2_resp = requests.get(url2)
-            #link2_headersJSON = url2_resp.headers
-
-            #link1_html_text = url1_resp.text
-            #link2_html_text = url2_resp.text
-
-            #soup1 = BeautifulSoup(link1_html_text, 'html.parser')
-            #soup2 = BeautifulSoup(link2_html_text, 'html.parser')
-
-            #cleantext = re.sub("<.*?>", "", soup1.title)
             diff = compare_urls(url1, url2)
             if len(diff) != 0:
                 index_key = url1 + ' and ' + url2
@@ -49,14 +35,25 @@ def main():
         except Exception as e:
             sys.exit(e)
 
+    # Output data
     table = list()
     for urls, diff in result.items():
         diff_str = ', '.join(diff)
         table.append([urls, diff_str])
 
-    col_names = ["URLs", "Difference"]
-    print(tabulate(table, headers=col_names, tablefmt="fancy_grid"))
+    if ofile is not None:
+        header = ["URLs", "Difference"]
+        with open(ofile, 'w', encoding='UTF8', newline='') as f:
+            writer = csv.writer(f)
 
+            # write the header
+            writer.writerow(header)
+
+            # write multiple rows
+            writer.writerows(table)
+    else:
+        header = ["URLs", "Difference"]
+        print(tabulate(table, headers=header, tablefmt="fancy_grid"))
 
 
 def compare_urls(url1, url2):
@@ -79,23 +76,6 @@ def compare_urls(url1, url2):
                     difference.append(element)
             if element == 'title' and soup1.title.string != soup2.title.string:
                 difference.append(element)
-
-        # if len(difference) != 0:
-        #     result[result_key] = difference
-
-
-
-       # print(f"Desc one: {desc1}")
-       # print(f"desc two: {desc2}")
-
-        #print(soup2.find_all("meta"))
-        # print(soup1)
-        # print(soup2)
-
-        # if soup1.title.string != soup2.title.string:
-        #     res1 = {url1 + ' ; ' + url2: {"title 1": soup1.title.string, "title 2": soup2.title.string}}
-        #     result.append(res1)
-            #print("titles are different", soup1.title.string, soup2.title.string, sep=", ")
 
     except Exception as e:
         sys.exit(e)
@@ -136,7 +116,7 @@ def process_args():
     url1 = 'link1'
     url2 = 'link2'
 
-    return link1, link2, ifile
+    return link1, link2, ifile, ofile
 
 
 
