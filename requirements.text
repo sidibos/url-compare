@@ -1,0 +1,8 @@
+re
+csv
+requests
+sys
+argparse
+bs4
+lxml
+tabulate

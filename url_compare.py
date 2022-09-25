@@ -1,4 +1,3 @@
-
 import re
 import csv
 import requests
@@ -12,29 +11,20 @@ from tabulate import tabulate
 def main():
     url1, url2, ifile, ofile = process_args()
     result = dict()
-    if ifile != None:
+    if ifile is not None:
         print("process file")
         # check it is a csv file
-        with open(ifile) as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                url1 = row['url1']
-                url2 = row['url2']
-                diff = compare_urls(url1, url2)
-                if len(diff) != 0:
-                    index_key = url1 + ' and ' + url2
-                    result[index_key] = diff
+        result = read_csv_file(ifile)
+
     else:
         try:
             diff = compare_urls(url1, url2)
             if len(diff) != 0:
                 index_key = url1 + ' and ' + url2
                 result[index_key] = diff
-           
-            
         except Exception as e:
             sys.exit(e)
-
+    print(result)
     # Output data
     table = list()
     for urls, diff in result.items():
@@ -57,7 +47,6 @@ def main():
 
 
 def compare_urls(url1, url2):
-    #result              = dict()
     elements_to_compare = ['title', 'desc']
     result_key = url1 + ' : ' + url2
     try:
@@ -74,24 +63,46 @@ def compare_urls(url1, url2):
                 desc2       = get_page_description(soup2.find_all("meta"))
                 if desc1 != desc2:
                     difference.append(element)
-            if element == 'title' and soup1.title.string != soup2.title.string:
-                difference.append(element)
+            elif element == 'title':
+                title1 = soup1.find('title')
+                title2 = soup2.find('title')
+                if title1 is not None and title2 is not None and title1.get_text() != title2.get_text():
+                    difference.append(element)
 
     except Exception as e:
         sys.exit(e)
-    
+
     return difference
+
+def read_csv_file(ifile):
+    result = dict()
+    with open(ifile) as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=',')
+            for row in reader:
+                url1, url2 = parse_urls(row)
+                diff = compare_urls(url1, url2)
+                if len(diff) != 0:
+                    index_key = url1 + ' and ' + url2
+                    result[index_key] = diff
+    print(result)
+    return result
+
+def parse_urls(row):
+    url1 = row['url1']
+    url2 = row['url2']
+    return url1, url2
 
 def get_page_description(meta_list):
     desc = ""
     for meta in meta_list:
         if meta.get('name') == "description":
             desc = meta.get('content')
-    
+
     return desc
 
+
 def process_args():
-    parser = argparse.ArgumentParser(description='Compare two URLs content and metadata values', 
+    parser = argparse.ArgumentParser(description='Compare two URLs content and metadata values',
             prog='url_compare')
     parser.add_argument('-i', '--ifile', nargs='?', help='input filename content list of URls')
     parser.add_argument('-o', '--ofile', nargs='?', help='Filename to output the result')
@@ -100,13 +111,13 @@ def process_args():
 
     try:
         args = parser.parse_args()
-        
+
         link1 = args.link1
         link2 = args.link2
         ifile = args.ifile
         ofile = args.ofile
 
-        if (link1 != None or link2 != None) and ifile != None:
+        if (link1 is not None or link2 is not None) and ifile is not None:
             raise Exception("Only one of these two can be provided (link1 and link2) or ifile ")
     except argparse.ArgumentError as e:
         sys.exit(e.message())
@@ -117,7 +128,6 @@ def process_args():
     url2 = 'link2'
 
     return link1, link2, ifile, ofile
-
 
 
 if __name__ == "__main__":
